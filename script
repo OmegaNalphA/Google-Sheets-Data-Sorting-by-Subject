@@ -1,0 +1,69 @@
+//Script to split into sheets
+
+var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+function onInstall(){
+ onOpen(); 
+}
+
+function  onOpen() {
+  var list = ss.getSheetByName("List");
+  if (list != null) {
+    sheetCreator(list);
+  }
+  else{
+   var menuEntries = [{name: "Create the List", functionName: "createList"}];
+   ss.addMenu("Sort Form submissions", menuEntries); 
+  }
+}
+
+function sheetCreator(list){
+  var data = list.getRange(2, 1, list.getLastRow(), 1).getValues();
+  // get info from the spreadsheet
+  var formSheet = list.getRange(2,5).getValue();
+  var sortBy =  list.getRange(3,5).getValue();
+  var columnsToSort =  list.getRange(4,5).getValue();
+  var orderBy =  list.getRange(5,5).getValue();
+  // if new sheets need to be created, create those sheets
+  for (i in data){
+    var listItem = data[i][0];
+    var sheet = ss.getSheetByName(listItem);
+    if (sheet == null && listItem != "") {
+      ss.insertSheet(listItem).getRange("A1").setFormula("=query('"+formSheet+"'!A1:ZZ;"+'"'+"select "+columnsToSort+" where "+sortBy+"='"+listItem+"' order by "+ orderBy +'"'+";1)");
+      // =query(formSheet!sheetColumns;"select columnsToSort where sortBy='xxx' order by orderBy";1)
+      SpreadsheetApp.flush();
+    }
+  }
+}
+
+function createList(){
+  var list = ss.getSheetByName("List");
+  if (list != null) {
+    Browser.msgBox("The list have already been created");
+  }
+  else {
+    var formSheet = Browser.inputBox("Name of the sheet collecting form responses:");
+    var sortBy = Browser.inputBox("Sort data according to which column? (A,B,C,...)");
+    var columnsToSort = Browser.inputBox("Which columns do you want to show and in which order? A,B,C or B,A,D or C,B...");
+    var orderBy = Browser.inputBox("Reorder rows by the values in which column?");
+    ss.insertSheet("List");
+    list = ss.getSheetByName("List");
+    list.getRange(1,4).setBackgroundRGB(227, 233, 255).setValue("Data used for sorting:");
+    list.getRange(1,4,1,2).mergeAcross();
+    list.getRange(2,4).setBackgroundRGB(238, 238, 238).setValue("Sheet collecting Form Responses:");
+    list.getRange(2,5).setBackgroundRGB(238, 238, 238).setValue(formSheet);
+    list.getRange(3,4).setBackgroundRGB(238, 238, 238).setValue("Sort data according to column:");
+    list.getRange(3,5).setBackgroundRGB(238, 238, 238).setValue(sortBy);
+    list.getRange(4,4).setBackgroundRGB(238, 238, 238).setValue("Columns to sort:");
+    list.getRange(4,5).setBackgroundRGB(238, 238, 238).setValue(columnsToSort);
+    list.getRange(5,4).setBackgroundRGB(238, 238, 238).setValue("Order by:");
+    list.getRange(5,5).setBackgroundRGB(238, 238, 238).setValue(orderBy);
+    list.getRange("D1:E5").setBorder(true, true, true, true, false, true);
+    list.getRange(1,1).setBackgroundRGB(227, 233, 255).setValue("List");
+    list.getRange(1,2).setBackgroundRGB(227, 233, 255).setValue("Forms submitted:");
+    list.getRange(2,1).setFormula("=EXPAND(Unique('"+formSheet+"'!"+sortBy+"2:"+sortBy+"))");
+    list.getRange(2,2).setFormula("=EXPAND(ARRAYFORMULA(IF(ISBLANK(A2:A),"+'""'+",COUNTIF('"+formSheet+"'!$"+sortBy+"2:$"+sortBy+",A2:A))))");
+    SpreadsheetApp.flush();
+    Browser.msgBox("List created, please reload this spreadsheet");
+  }
+}
