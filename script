@@ -1,7 +1,10 @@
 //Script to split into sheets
+//IMPORTANT PROBLEM: Google Sheets can only support so many cells max. If you try to make over 100 sheets with the default size
+//of rows and columns, no more tabs will be added. 
 
 var ss = SpreadsheetApp.getActiveSpreadsheet();
 
+//change current data
 function onInstall(){
  onOpen(); 
 }
@@ -18,6 +21,7 @@ function  onOpen() {
 }
 
 function sheetCreator(list){
+ //get data range
   var data = list.getRange(2, 1, list.getLastRow(), 1).getValues();
   // get info from the spreadsheet
   var formSheet = list.getRange(2,5).getValue();
